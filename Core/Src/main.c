@@ -39,6 +39,7 @@
 #ifdef USE_PMS_SENSOR
   // usart.h inclusion is controlled by device configuration
 #endif
+#include "mpu6050.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -120,7 +121,10 @@ int main(void)
   // tell aht20 lib which i2c to use
   setI2CHandle(&hi2c2);
 #endif
-
+  loraSetI2CHandle(&hi2c2);
+  APP_LOG(TS_OFF, VLEVEL_M, "\r\n INITIALISING GYROSCOPE...\r\n");
+  while (MPU6050_Init(&hi2c2) == 1);
+  APP_LOG(TS_OFF, VLEVEL_M, "\r\n GYROSCOPE INITIALISED!\r\n");
   /* USER CODE END 2 */
 
   /* Infinite loop */

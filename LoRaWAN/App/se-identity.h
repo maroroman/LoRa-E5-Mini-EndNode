@@ -90,17 +90,17 @@ extern "C" {
  * When set to 1 DevEui is LORAWAN_DEVICE_EUI
  * When set to 0 DevEui is automatically set with a value provided by MCU platform
  */
-#define STATIC_DEVICE_EUI                                  0
+#define STATIC_DEVICE_EUI                                  1//0
 
 /*!
  * end-device IEEE EUI (big endian)
  */
-#define LORAWAN_DEVICE_EUI                                 { 0x00, 0x80, 0xE1, 0x01, 0x01, 0x01, 0x01, 0x01 }
+#define LORAWAN_DEVICE_EUI                                 { 0x70, 0xB3, 0xD5, 0x7E, 0xD0, 0x06, 0x33, 0xB9 }//{ 0x00, 0x80, 0xE1, 0x01, 0x01, 0x01, 0x01, 0x01 }
 
 /*!
  * App/Join server IEEE EUI (big endian)
  */
-#define LORAWAN_JOIN_EUI                                   { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 }
+#define LORAWAN_JOIN_EUI                                   { 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07 }
 
 /*!
  * When set to 1 DevAddr is LORAWAN_DEVICE_ADDRESS
@@ -117,22 +117,22 @@ extern "C" {
 /*!
  * Application root key
  */
-#define LORAWAN_APP_KEY                                    3C,4F,CF,09,88,15,F7,AB,A6,D2,AE,28,16,15,7E,2B
+#define LORAWAN_APP_KEY                                    F4,0C,A3,3A,F5,1A,CE,1D,67,46,1C,6B,4A,DD,10,B1
 
 /*!
  * Network root key
  */
-#define LORAWAN_NWK_KEY                                    2B,7E,15,16,28,AE,D2,A6,AB,F7,15,88,09,CF,4F,3C
+#define LORAWAN_NWK_KEY                                    F4,0C,A3,3A,F5,1A,CE,1D,67,46,1C,6B,4A,DD,10,B1
 
 /*!
  * Forwarding Network session key
  */
-#define LORAWAN_NWK_S_KEY                                  2B,7E,15,16,28,AE,D2,A6,AB,F7,15,88,09,CF,4F,3C
+#define LORAWAN_NWK_S_KEY                                  18,83,F4,CF,37,02,7B,97,70,D6,CB,A1,70,23,12,5D
 
 /*!
  * Application session key
  */
-#define LORAWAN_APP_S_KEY                                  2B,7E,15,16,28,AE,D2,A6,AB,F7,15,88,09,CF,4F,3C
+#define LORAWAN_APP_S_KEY                                  4E,37,87,3D,AA,14,0A,B7,D0,23,A9,88,03,E3,2B,74
 
 /*!
  * Format commissioning keys

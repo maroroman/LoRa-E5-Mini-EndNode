@@ -46,6 +46,7 @@
 #ifdef USE_PMS_SENSOR
   #include "usart.h"
 #endif
+#include "mpu6050.h"
 /* USER CODE END Includes */
 
 /* External variables ---------------------------------------------------------*/
@@ -197,6 +198,8 @@ static TxEventType_t EventType = TX_ON_TIMER;
 static UTIL_TIMER_Object_t TxTimer;
 
 /* USER CODE BEGIN PV */
+MPU6050_t MPU6050;
+I2C_HandleTypeDef i2CHandle;
 /* vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv */
 
 /**
@@ -341,7 +344,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 /* Private functions ---------------------------------------------------------*/
 /* USER CODE BEGIN PrFD */
-
+void loraSetI2CHandle(I2C_HandleTypeDef *pHandle)
+{
+	i2CHandle = *pHandle;
+}
 /* USER CODE END PrFD */
 
 static void OnRxData(LmHandlerAppData_t *appData, LmHandlerRxParams_t *params)
@@ -470,16 +476,17 @@ static void SendTxData(void)
   pms25 = 200 + (rand() % 100 - 50);
   pms10 = 100 + (rand() % 10 - 5);
 #endif
-
+  MPU6050_Read_All(&i2CHandle, &MPU6050);
   AppData.Port = LORAWAN_USER_APP_PORT;
 
 #ifdef CAYENNE_LPP
   CayenneLppReset();
   CayenneLppAddTemperatureFloat(channel++, aht20_temp);
   CayenneLppAddRelativeHumidityFloat(channel++, aht20_hum);
-  CayenneLppAddLuminosity(channel++, pms1);
-  CayenneLppAddLuminosity(channel++, pms25);
-  CayenneLppAddLuminosity(channel++, pms10);
+//  CayenneLppAddLuminosity(channel++, pms1);
+//  CayenneLppAddLuminosity(channel++, pms25);
+//  CayenneLppAddLuminosity(channel++, pms10);
+  CayenneLppAddGyrometer(channel++, MPU6050.Gyro_X_RAW, MPU6050.Gyro_Y_RAW, MPU6050.Gyro_Z_RAW);
 
   if ((LmHandlerParams.ActiveRegion != LORAMAC_REGION_US915) && (LmHandlerParams.ActiveRegion != LORAMAC_REGION_AU915)
 	  && (LmHandlerParams.ActiveRegion != LORAMAC_REGION_AS923))

@@ -29,7 +29,7 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "i2c.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -45,12 +45,12 @@ extern "C" {
 /*!
  * CAYENNE_LPP is myDevices Application server.
  */
-/*#define CAYENNE_LPP*/
+#define CAYENNE_LPP
 
 /*!
  * Defines the application data transmission duty cycle. 10s, value in [ms].
  */
-#define APP_TX_DUTYCYCLE                            60000
+#define APP_TX_DUTYCYCLE                            10000
 
 /*!
  * LoRaWAN User application port
@@ -120,7 +120,7 @@ extern "C" {
 void LoRaWAN_Init(void);
 
 /* USER CODE BEGIN EFP */
-
+void loraSetI2CHandle(I2C_HandleTypeDef *pHandle);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus
