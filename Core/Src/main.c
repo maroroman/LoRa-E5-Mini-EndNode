@@ -21,8 +21,8 @@
 #include "main.h"
 #include "dma.h"
 #include "i2c.h"
-#include "app_lorawan.h"
 #include "subghz.h"
+#include "app_lorawan.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -32,6 +32,7 @@
 #include <time.h>
 #include "sys_app.h"
 #include "sys_conf.h"
+#include "lora_app.h"
 #ifdef USE_AHT20_SENSOR
   // i2c.h inclusion is controlled by device configuration
   #include "aht20.h"
@@ -40,6 +41,7 @@
   // usart.h inclusion is controlled by device configuration
 #endif
 #include "mpu6050.h"
+#include <bme280.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -102,9 +104,9 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_SUBGHZ_Init();
   MX_LoRaWAN_Init();
-  MX_DMA_Init();
   MX_I2C2_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
@@ -121,10 +123,61 @@ int main(void)
   // tell aht20 lib which i2c to use
   setI2CHandle(&hi2c2);
 #endif
+  APP_LOG(TS_OFF, VLEVEL_M, "\r\n STARTING SENSORS...\r\n");
+  //HAL_GPIO_WritePin(DBG4_GPIO_Port, DBG4_Pin, GPIO_PIN_SET);
+  APP_LOG(TS_OFF, VLEVEL_M, "\r\n SENSORS STARTED!\r\n");
+  APP_LOG(TS_OFF, VLEVEL_M, "\r\n STARTING GNSS...\r\n");
+  //HAL_GPIO_WritePin(DBG3_GPIO_Port, DBG3_Pin, GPIO_PIN_RESET);
+  APP_LOG(TS_OFF, VLEVEL_M, "\r\n GNSS STARTED!\r\n");
+
   loraSetI2CHandle(&hi2c2);
+  loraSetUARTHandle(&huart2);
   APP_LOG(TS_OFF, VLEVEL_M, "\r\n INITIALISING GYROSCOPE...\r\n");
-  while (MPU6050_Init(&hi2c2) == 1);
+  //while (MPU6050_Init(&hi2c2) == 1);
   APP_LOG(TS_OFF, VLEVEL_M, "\r\n GYROSCOPE INITIALISED!\r\n");
+
+  uint8_t devices = 0u;
+
+    APP_LOG(TS_OFF, VLEVEL_M,"Searching for I2C devices on the bus...\n");
+    /* Values outside 0x03 and 0x77 are invalid. */
+    for (uint8_t i = 0x03u; i < 0x78u; i++)
+    {
+      uint8_t address = i << 1u ;
+      /* In case there is a positive feedback, print it out. */
+      if (HAL_OK == HAL_I2C_IsDeviceReady(&hi2c2, address, 3u, 10u))
+      {
+    	APP_LOG(TS_OFF, VLEVEL_M,"Device found: 0x%02X\n", address);
+        devices++;
+      }
+    }
+    /* Feedback of the total number of devices. */
+    if (0u == devices)
+    {
+      APP_LOG(TS_OFF, VLEVEL_M,"No device found.\n");
+    }
+    else
+    {
+      APP_LOG(TS_OFF, VLEVEL_M,"Total found devices: %d\n", devices);
+    }
+
+//  APP_LOG(TS_OFF, VLEVEL_M, "\r\n INITIALISING BAROMETER...\r\n");
+//  struct bme280_t bme280;
+//  bme280.bus_write = BME280_I2C_bus_write;
+//  bme280.bus_read = BME280_I2C_bus_read;
+//  bme280.dev_addr = BME280_I2C_ADDRESS2;
+//  bme280.delay_msec = BME280_delay_msek;
+//  dev.i2c = &hi2c2;
+//  bmp280_init_default_params(&params);
+//  while (bmp280_init(&dev, &params) == 1);
+//  int32_t bmp280_temp = 0;
+//  uint32_t bmp280_pres = 0;
+//  uint32_t bmp280_hum = 0;
+//  bmp280_is_measuring(dev)
+//  bmp280_read_fixed(&dev, &bmp280_temp, &bmp280_pres, &bmp280_hum);
+//  HAL_Delay(500);
+//  APP_LOG(TS_OFF, VLEVEL_M, "BMP280 OUTPUT: TEMP: %d PRES: %d HUM: %d\r\n", bmp280_temp, bmp280_pres, bmp280_hum);
+//  APP_LOG(TS_OFF, VLEVEL_M, "\r\n BAROMETER INITIALISED!\r\n");
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -152,10 +205,12 @@ void SystemClock_Config(void)
   */
   HAL_PWR_EnableBkUpAccess();
   __HAL_RCC_LSEDRIVE_CONFIG(RCC_LSEDRIVE_LOW);
+
   /** Configure the main internal regulator output voltage
   */
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
-  /** Initializes the CPU, AHB and APB busses clocks
+
+  /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSE|RCC_OSCILLATORTYPE_MSI;
   RCC_OscInitStruct.LSEState = RCC_LSE_ON;
@@ -167,6 +222,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Configure the SYSCLKSource, HCLK, PCLK1 and PCLK2 clocks dividers
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK3|RCC_CLOCKTYPE_HCLK
@@ -219,5 +275,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

@@ -37,6 +37,7 @@
 #include "sys_conf.h"
 #include "CayenneLpp.h"
 #include "sys_sensors.h"
+#include "flash_if.h"
 
 /* USER CODE BEGIN Includes */
 #include <stdlib.h>
@@ -47,6 +48,10 @@
   #include "usart.h"
 #endif
 #include "mpu6050.h"
+#include <bme280.h>
+#include "GNSS.h"
+#include "bme280_support.h"
+
 /* USER CODE END Includes */
 
 /* External variables ---------------------------------------------------------*/
@@ -77,7 +82,7 @@ typedef enum TxEventType_e
 
 /* USER CODE END PTD */
 
-/* Private define ------------------------------------------------------------*/
+
 /* USER CODE BEGIN PD */
 
 /* USER CODE END PD */
@@ -106,22 +111,23 @@ static void OnTxTimerEvent(void *context);
 static void OnJoinRequest(LmHandlerJoinParams_t *joinParams);
 
 /**
+  * @brief callback when LoRaWAN application has sent a frame
   * @brief  tx event callback function
   * @param  params status of last Tx
   */
 static void OnTxData(LmHandlerTxParams_t *params);
 
 /**
-  * @brief callback when LoRa application has received a frame
+  * @brief callback when LoRaWAN application has received a frame
   * @param appData data received in the last Rx
   * @param params status of last Rx
   */
 static void OnRxData(LmHandlerAppData_t *appData, LmHandlerRxParams_t *params);
 
-/*!
- * Will be called each time a Radio IRQ is handled by the MAC layer
- *
- */
+/**
+  * Will be called each time a Radio IRQ is handled by the MAC layer
+  *
+  */
 static void OnMacProcessNotify(void);
 
 /* USER CODE BEGIN PFP */
@@ -158,6 +164,9 @@ static void OnJoinTimerLedEvent(void *context);
 /* USER CODE END PFP */
 
 /* Private variables ---------------------------------------------------------*/
+/**
+  * @brief LoRaWAN default activation type
+  */
 static ActivationType_t ActivationType = LORAWAN_DEFAULT_ACTIVATION_TYPE;
 
 /**
@@ -165,14 +174,14 @@ static ActivationType_t ActivationType = LORAWAN_DEFAULT_ACTIVATION_TYPE;
   */
 static LmHandlerCallbacks_t LmHandlerCallbacks =
 {
-  .GetBatteryLevel =           GetBatteryLevel,
-  .GetTemperature =            GetTemperatureLevel,
-  .GetUniqueId =               GetUniqueId,
-  .GetDevAddr =                GetDevAddr,
-  .OnMacProcess =              OnMacProcessNotify,
-  .OnJoinRequest =             OnJoinRequest,
-  .OnTxData =                  OnTxData,
-  .OnRxData =                  OnRxData
+	.GetBatteryLevel =           GetBatteryLevel,
+	.GetTemperature =            GetTemperatureLevel,
+	.GetUniqueId =               GetUniqueId,
+	.GetDevAddr =                GetDevAddr,
+	.OnMacProcess =              OnMacProcessNotify,
+	.OnJoinRequest =             OnJoinRequest,
+	.OnTxData =                  OnTxData,
+	.OnRxData =                  OnRxData
 };
 
 /**
@@ -184,7 +193,6 @@ static LmHandlerParams_t LmHandlerParams =
   .DefaultClass =             LORAWAN_DEFAULT_CLASS,
   .AdrEnable =                LORAWAN_ADR_STATE,
   .TxDatarate =               LORAWAN_DEFAULT_DATA_RATE,
-  .PingPeriodicity =          LORAWAN_DEFAULT_PING_SLOT_PERIODICITY
 };
 
 /**
@@ -200,6 +208,7 @@ static UTIL_TIMER_Object_t TxTimer;
 /* USER CODE BEGIN PV */
 MPU6050_t MPU6050;
 I2C_HandleTypeDef i2CHandle;
+UART_HandleTypeDef uartHandle;
 /* vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv */
 
 /**
@@ -242,6 +251,10 @@ static UTIL_TIMER_Object_t JoinLedTimer;
 
 void LoRaWAN_Init(void)
 {
+  /* USER CODE BEGIN LoRaWAN_Init_LV */
+
+  /* USER CODE END LoRaWAN_Init_LV */
+
   /* USER CODE BEGIN LoRaWAN_Init_1 */
   /* vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv */
   SYS_LED_Init(SYS_LED_BLUE);
@@ -275,7 +288,9 @@ void LoRaWAN_Init(void)
   /* USER CODE END LoRaWAN_Init_1 */
 
   UTIL_SEQ_RegTask((1 << CFG_SEQ_Task_LmHandlerProcess), UTIL_SEQ_RFU, LmHandlerProcess);
+
   UTIL_SEQ_RegTask((1 << CFG_SEQ_Task_LoRaSendOnTxTimerOrButtonEvent), UTIL_SEQ_RFU, SendTxData);
+
   /* Init Info table used by LmHandler*/
   LoraInfo_Init();
 
@@ -297,8 +312,8 @@ void LoRaWAN_Init(void)
   if (EventType == TX_ON_TIMER)
   {
     /* send every time timer elapses */
-    UTIL_TIMER_Create(&TxTimer,  0xFFFFFFFFU, UTIL_TIMER_ONESHOT, OnTxTimerEvent, NULL);
-    UTIL_TIMER_SetPeriod(&TxTimer,  APP_TX_DUTYCYCLE);
+	UTIL_TIMER_Create(&TxTimer,  0xFFFFFFFFU, UTIL_TIMER_ONESHOT, OnTxTimerEvent, NULL);
+	UTIL_TIMER_SetPeriod(&TxTimer,  APP_TX_DUTYCYCLE);
     UTIL_TIMER_Start(&TxTimer);
   }
   else
@@ -347,6 +362,11 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 void loraSetI2CHandle(I2C_HandleTypeDef *pHandle)
 {
 	i2CHandle = *pHandle;
+}
+
+void loraSetUARTHandle(UART_HandleTypeDef *pHandle)
+{
+	uartHandle = *pHandle;
 }
 /* USER CODE END PrFD */
 
@@ -433,8 +453,8 @@ static void SendTxData(void)
 {
   /* USER CODE BEGIN SendTxData_1 */
   /* vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv */
-  float aht20_hum = 0.0, aht20_temp = 100.0;
-  uint16_t pms1=0, pms25=0, pms10=0;
+  //float aht20_hum = 0.0, aht20_temp = 100.0;
+  //uint16_t pms1=0, pms25=0, pms10=0;
   UTIL_TIMER_Time_t nextTxIn = 0;
 
 
@@ -454,8 +474,8 @@ static void SendTxData(void)
 	  readAHT20(&aht20_hum, &aht20_temp);
   }
 #else
-  aht20_hum = 60 + (rand() % 40 - 20);
-  aht20_temp = 23 + (rand() % 10 - 5);
+  //aht20_hum = 60 + (rand() % 40 - 20);
+  //aht20_temp = 23 + (rand() % 10 - 5);
 #endif
 
 #ifdef USE_PMS_SENSOR
@@ -472,21 +492,50 @@ static void SendTxData(void)
 	  pms10 = 0;
   }
 #else
-  pms1 = 500 + (rand() % 300 - 150);
-  pms25 = 200 + (rand() % 100 - 50);
-  pms10 = 100 + (rand() % 10 - 5);
+  //pms1 = 500 + (rand() % 300 - 150);
+  //pms25 = 200 + (rand() % 100 - 50);
+  //pms10 = 100 + (rand() % 10 - 5);
+  APP_LOG(TS_OFF, VLEVEL_M, "\r\n INITIALISING GNSS...\r\n");
+  GNSS_StateHandle GNSS_Handle;
+  GNSS_Init(&GNSS_Handle, &uartHandle);
+  HAL_Delay(1000);
+  GNSS_LoadConfig(&GNSS_Handle);
+  GNSS_GetUniqID(&GNSS_Handle);
+  GNSS_ParseBuffer(&GNSS_Handle);
+  HAL_Delay(250);
+  GNSS_GetPVTData(&GNSS_Handle);
+  GNSS_ParseBuffer(&GNSS_Handle);
+  HAL_Delay(250);
+  GNSS_SetMode(&GNSS_Handle,Automotiv);
+  HAL_Delay(250);
+  APP_LOG(TS_OFF, VLEVEL_M, "\r\n GNSS Initialized!\r\n");
+
+  int32_t bmp280_temp = 0;
+  uint32_t bmp280_pres = 0;
+  uint32_t bmp280_hum = 0;
+
+  //BMP280_HandleTypedef dev;
+  //dev.i2c = &i2CHandle;
 #endif
-  MPU6050_Read_All(&i2CHandle, &MPU6050);
+  APP_LOG(TS_OFF, VLEVEL_M, "\r\n Reading Gyro...\r\n");
+  //MPU6050_Read_All(&i2CHandle, &MPU6050);
+  APP_LOG(TS_OFF, VLEVEL_M, "\r\n Reading Baro...\r\n");
+  bme280_data_readout_template(&bmp280_temp, &bmp280_pres, &bmp280_hum);
+  //bmp280_read_fixed(&dev, &bmp280_temp, &bmp280_pres, &bmp280_hum);
+
   AppData.Port = LORAWAN_USER_APP_PORT;
+  APP_LOG(TS_OFF, VLEVEL_M, "BMP280 OUTPUT: TEMP: %d PRES: %d HUM: %d\r\n", bmp280_temp, bmp280_pres, bmp280_hum);
 
 #ifdef CAYENNE_LPP
   CayenneLppReset();
-  CayenneLppAddTemperatureFloat(channel++, aht20_temp);
-  CayenneLppAddRelativeHumidityFloat(channel++, aht20_hum);
+  CayenneLppAddTemperatureFloat(channel++, bmp280_temp);
+  CayenneLppAddRelativeHumidityFloat(channel++, bmp280_hum);
 //  CayenneLppAddLuminosity(channel++, pms1);
 //  CayenneLppAddLuminosity(channel++, pms25);
 //  CayenneLppAddLuminosity(channel++, pms10);
-  CayenneLppAddGyrometer(channel++, MPU6050.Gyro_X_RAW, MPU6050.Gyro_Y_RAW, MPU6050.Gyro_Z_RAW);
+  //CayenneLppAddGyrometer(channel++, MPU6050.Gyro_X_RAW, MPU6050.Gyro_Y_RAW, MPU6050.Gyro_Z_RAW);
+  CayenneLppAddBarometricPressure(channel++, bmp280_pres);
+  CayenneLppAddGps(channel++, GNSS_Handle.lat, GNSS_Handle.lon, GNSS_Handle.height);
 
   if ((LmHandlerParams.ActiveRegion != LORAMAC_REGION_US915) && (LmHandlerParams.ActiveRegion != LORAMAC_REGION_AU915)
 	  && (LmHandlerParams.ActiveRegion != LORAMAC_REGION_AS923))
@@ -645,5 +694,3 @@ static void OnMacProcessNotify(void)
   /* USER CODE BEGIN OnMacProcessNotify_2 */
   /* USER CODE END OnMacProcessNotify_2 */
 }
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

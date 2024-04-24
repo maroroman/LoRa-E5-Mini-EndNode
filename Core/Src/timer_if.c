@@ -24,7 +24,6 @@
 #include "timer_if.h"
 #include "main.h" /*for STM32CubeMX generated RTC_N_PREDIV_S and RTC_N_PREDIV_A*/
 #include "rtc.h"
-#include "stm32_lpm.h"
 #include "utilities_def.h"
 #include "stm32wlxx_ll_rtc.h"
 
@@ -506,7 +505,13 @@ static inline uint32_t GetTimerTicks(void)
   /* USER CODE BEGIN GetTimerTicks */
 
   /* USER CODE END GetTimerTicks */
-  return (UINT32_MAX - LL_RTC_TIME_GetSubSecond(RTC));
+  uint32_t ssr = LL_RTC_TIME_GetSubSecond(RTC);
+  /* read twice to make sure value it valid*/
+  while (ssr != LL_RTC_TIME_GetSubSecond(RTC))
+  {
+    ssr = LL_RTC_TIME_GetSubSecond(RTC);
+  }
+  return UINT32_MAX - ssr;
   /* USER CODE BEGIN GetTimerTicks_Last */
 
   /* USER CODE END GetTimerTicks_Last */
@@ -515,5 +520,3 @@ static inline uint32_t GetTimerTicks(void)
 /* USER CODE BEGIN PrFD */
 
 /* USER CODE END PrFD */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

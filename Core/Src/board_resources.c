@@ -19,7 +19,7 @@
   */
 /* USER CODE END Header */
 
-/* Includes ------------------------------------------------------------------*/
+/* Includes */
 #include "platform.h"
 #include "board_resources.h"
 #include "stm32wlxx_hal_exti.h"
@@ -28,12 +28,12 @@
 
 /* USER CODE END Includes */
 
-/* External variables ---------------------------------------------------------*/
+/* External variables */
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
 
-/* Private typedef -----------------------------------------------------------*/
+/* Private typedef */
 /**
   * @brief Exti Line callback function definition
   */
@@ -43,17 +43,17 @@ typedef void (* SYS_RES_EXTI_LineCallback)(void);
 
 /* USER CODE END PTD */
 
-/* Private define ------------------------------------------------------------*/
+/* Private define */
 /* USER CODE BEGIN PD */
 
 /* USER CODE END PD */
 
-/* Private macro -------------------------------------------------------------*/
+/* Private macro */
 /* USER CODE BEGIN PM */
 
 /* USER CODE END PM */
 
-/* Private variables ---------------------------------------------------------*/
+/* Private variables */
 /**
   * @brief Ports led list
   */
@@ -84,13 +84,13 @@ EXTI_HandleTypeDef sys_hpb_exti[SYS_BUTTONn];
 
 /* USER CODE END PV */
 
-/* Private function prototypes -----------------------------------------------*/
+/* Private function prototypes */
 
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
-/* Exported functions --------------------------------------------------------*/
+/* Exported functions */
 int32_t SYS_LED_Init(Sys_Led_TypeDef Led)
 {
   GPIO_InitTypeDef  gpio_init_structure = {0};
@@ -213,7 +213,7 @@ __weak void SYS_BUTTON1_EXTI_Callback(void)
 
 /* USER CODE END EF */
 
-/* Private Functions Definition -----------------------------------------------*/
+/* Private Functions Definition */
 
 /* USER CODE BEGIN PrFD */
 

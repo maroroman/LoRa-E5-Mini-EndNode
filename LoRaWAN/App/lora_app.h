@@ -43,11 +43,6 @@ extern "C" {
 #define ACTIVE_REGION                               LORAMAC_REGION_EU868
 
 /*!
- * CAYENNE_LPP is myDevices Application server.
- */
-#define CAYENNE_LPP
-
-/*!
  * Defines the application data transmission duty cycle. 10s, value in [ms].
  */
 #define APP_TX_DUTYCYCLE                            10000
@@ -65,7 +60,7 @@ extern "C" {
 #define LORAWAN_SWITCH_CLASS_PORT                   3
 
 /*!
- * LoRaWAN default endNode class port
+ * LoRaWAN default class
  */
 #define LORAWAN_DEFAULT_CLASS                       CLASS_A
 
@@ -81,7 +76,7 @@ extern "C" {
 #define LORAWAN_ADR_STATE                           LORAMAC_HANDLER_ADR_ON
 
 /*!
- * LoRaWAN Default data Rate Data Rate
+ * LoRaWAN Default Data Rate
  * @note Please note that LORAWAN_DEFAULT_DATA_RATE is used only when LORAWAN_ADR_STATE is disabled
  */
 #define LORAWAN_DEFAULT_DATA_RATE                   DR_0
@@ -100,7 +95,7 @@ extern "C" {
  * Default Unicast ping slots periodicity
  *
  * \remark periodicity is equal to 2^LORAWAN_DEFAULT_PING_SLOT_PERIODICITY seconds
- *         example: 2^3 = 8 seconds. The end-device will open an Rx slot every 8 seconds.
+ *         example: 2^4 = 16 seconds. The end-device will open an Rx slot every 16 seconds.
  */
 #define LORAWAN_DEFAULT_PING_SLOT_PERIODICITY       4
 
@@ -108,7 +103,7 @@ extern "C" {
 #define CAYENNE_LPP
 /* USER CODE END EC */
 
-/* Exported macro ------------------------------------------------------------*/
+/* Exported macros -----------------------------------------------------------*/
 /* USER CODE BEGIN EM */
 
 /* USER CODE END EM */
@@ -121,6 +116,7 @@ void LoRaWAN_Init(void);
 
 /* USER CODE BEGIN EFP */
 void loraSetI2CHandle(I2C_HandleTypeDef *pHandle);
+void loraSetUARTHandle(UART_HandleTypeDef *pHandle);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus
@@ -128,5 +124,3 @@ void loraSetI2CHandle(I2C_HandleTypeDef *pHandle);
 #endif
 
 #endif /*__LORA_APP_H__*/
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

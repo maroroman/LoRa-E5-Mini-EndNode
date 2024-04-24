@@ -143,6 +143,12 @@ typedef enum
   RBI_SWITCH_RFO_HP = RADIO_SWITCH_RFO_HP,
 } RBI_Switch_TypeDef;
 
+typedef enum
+{
+  RBI_RFO_LP_MAXPOWER = RADIO_RFO_LP_MAXPOWER,
+  RBI_RFO_HP_MAXPOWER = RADIO_RFO_HP_MAXPOWER,
+} RBI_RFOMaxPowerConfig_TypeDef;
+
 #else
 /* USER CODE BEGIN Exported Types */
 
@@ -154,6 +160,12 @@ typedef enum
   RBI_SWITCH_RFO_LP = 2,
   RBI_SWITCH_RFO_HP = 3,
 } RBI_Switch_TypeDef;
+
+typedef enum
+{
+  RBI_RFO_LP_MAXPOWER = 0,
+  RBI_RFO_HP_MAXPOWER = 1,
+} RBI_RFOMaxPowerConfig_TypeDef;
 /* USER CODE BEGIN Exported Types_2 */
 
 /* USER CODE END Exported Types_2 */
@@ -225,6 +237,13 @@ int32_t RBI_IsTCXO(void);
   */
 int32_t RBI_IsDCDC(void);
 
+/**
+  * @brief  Return RF Output Max Power Configuration of matching circuit
+  * @note   never remove called by MW,
+  * @retval return Max Power configuration of matching circuit for Low Power or High Power mode in dBm
+  */
+int32_t RBI_GetRFOMaxPowerConfig(RBI_RFOMaxPowerConfig_TypeDef Config);
+
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */
@@ -234,5 +253,3 @@ int32_t RBI_IsDCDC(void);
 #endif
 
 #endif /* RADIO_BOARD_IF_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
